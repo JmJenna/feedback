@@ -10,7 +10,7 @@ import os
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql:///feedback_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', "postgresql:///feedback_db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY','hellosecret1')
@@ -75,7 +75,7 @@ def login():
             return redirect(f"/users/{user.username}")
         else:
             form.username.errors = ["Invalid username/password."]
-            return render_template("users/login.html", form=form)
+            return render_template("login.html", form=form)
 
     return render_template("login.html", form=form)
 
@@ -164,28 +164,9 @@ def update_feedback(feedback_id):
 
         return redirect(f"/users/{feedback.username}")
 
-    return render_template("/feedback_edit.html", form=form, feedback=feedback)
+    return render_template("feedback_edit.html", form=form, feedback=feedback)
 
 
-@app.route('/feedback/<int:feedback_id>/update', methods=['GET', 'POST'])
-def update_feedback(feedback_id):
-
-    feedback = Feedback.query.get_or_404(feedback_id)
-
-    if "username" not in session or feedback.username != session["username"]:
-        return Unauthorized()
-
-    form = FeedbackForm(obj=feedback)    
-
-    if form.validate_on_submit():
-        title = form.title.data
-        content = form.content.data
-
-        db.session.commit()
-
-        return redirect(f'/users/{feedback.username}')
-
-    return render_template('/feedback_edit.html' form=form , )    
 
 @app.route("/feedback/<int:feedback_id>/delete", methods=["POST"])
 def delete_feedback(feedback_id):
